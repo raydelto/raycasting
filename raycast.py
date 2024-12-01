@@ -6,7 +6,6 @@ WIDTH = 1250
 HEIGHT = 720
 HALF_WIDTH = WIDTH // 2
 HALF_HEIGHT = HEIGHT // 2
-FPS = 100  # Frames per second
 TILE = 100  # Size of the map tile
 
 # Calculation constants
@@ -36,7 +35,6 @@ BROWN = (139, 69, 19)
 # Global object reference variables
 player = None
 renderer = None
-clock = None
 
 # Text map representation of the world
 text_map = [
@@ -147,14 +145,13 @@ def to_map_coords(x, y):
 
 
 def init():
-    global screen, player, renderer, clock
+    global screen, player, renderer
 
     # Initialize Pygame
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     player = Player()
     renderer = Renderer(screen, player)
-    clock = pygame.time.Clock()
 
 
 def main():
@@ -176,7 +173,6 @@ def main():
         renderer.draw_walls()
 
         pygame.display.flip()
-        clock.tick(FPS)
 
 
 if __name__ == "__main__":
