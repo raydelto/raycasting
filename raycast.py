@@ -31,6 +31,7 @@ SCALE = WIDTH // NUM_RAYS  # Scale of the projected walls
 BLACK = (0, 0, 0)
 BLUE = (0, 0, 255)
 GRAY = (200, 200, 150)
+BROWN = (139, 69, 19)
 
 # Global object reference variables
 player = None
@@ -136,25 +137,13 @@ class Renderer:
             depth = depth_v if depth_v < depth_h else depth_h
             depth *= math.cos(self.player.angle - cur_angle)  # Remove fish-eye effect
             proj_height = PROJ_COEFF / depth  # Calculate projected wall height
-            color = get_wall_color()  # Get dynamic wall color
-            while color == (0, 0, 0):
-                color = get_wall_color()
-            pygame.draw.rect(self.screen, color, (ray * SCALE, HALF_HEIGHT - proj_height // 2, SCALE, proj_height))
+            pygame.draw.rect(self.screen, BROWN, (ray * SCALE, HALF_HEIGHT - proj_height // 2, SCALE, proj_height))
             cur_angle += DELTA_ANGLE
 
 
 # Convert world coordinates to map coordinates
 def to_map_coords(x, y):
     return (x // TILE) * TILE, (y // TILE) * TILE
-
-
-# Calculate dynamic wall colors
-def get_wall_color():
-    ticks = pygame.time.get_ticks()
-    r = (127 * (1 + math.sin(ticks * 0.0005)) + 128) % 256
-    g = (127 * (1 + math.sin(ticks * 0.001 + 2)) + 128) % 256
-    b = (127 * (1 + math.sin(ticks * 0.0015 + 4)) + 128) % 256
-    return (int(r), int(g), int(b))
 
 
 def init():
