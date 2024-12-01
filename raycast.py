@@ -8,15 +8,11 @@ WIDTH = 1250
 HEIGHT = 720
 HALF_WIDTH = WIDTH // 2
 HALF_HEIGHT = HEIGHT // 2
-TILE = 100  # Size of the map tile
+TILE_SIZE = 100  # In pixels
 
 # Calculation constants
 ROUNDING_ERROR = 0.00001
 ANGLE_STEP = 0.02
-
-# Mini-map scale
-MAP_SCALE = 100
-MAP_TILE = TILE // MAP_SCALE
 
 # Field of view settings
 FOV = math.pi / 3
@@ -25,7 +21,7 @@ NUM_RAYS = 300  # Number of rays for raycasting
 MAX_DEPTH = 800  # Max depth of field
 DELTA_ANGLE = FOV / NUM_RAYS  # Angle between rays
 DIST = NUM_RAYS / (2 * math.tan(HALF_FOV))  # Distance from the player to the projection plane
-PROJ_COEFF = 3 * DIST * TILE  # Projection coefficient
+PROJ_COEFF = 3 * DIST * TILE_SIZE  # Projection coefficient
 SCALE = WIDTH // NUM_RAYS  # Scale of the projected walls
 
 # Color definitions
@@ -39,7 +35,7 @@ BROWN = (139, 69, 19)
 
 # Convert world coordinates to map coordinates
 def to_map_coords(x, y):
-    return (x // TILE) * TILE, (y // TILE) * TILE
+    return (x // TILE_SIZE) * TILE_SIZE, (y // TILE_SIZE) * TILE_SIZE
 
 
 # CLASSES
@@ -63,7 +59,7 @@ class Map:
         for j, row in enumerate(self.text_map):
             for i, char in enumerate(row):
                 if char == 'X':
-                    self.world_map.add((i * TILE, j * TILE))
+                    self.world_map.add((i * TILE_SIZE, j * TILE_SIZE))
 
 
 class Player:
@@ -123,22 +119,22 @@ class Renderer:
             cos_a = cos_a if cos_a else ROUNDING_ERROR  # Avoid division by zero
 
             # Vertical lines
-            x, dx = (mapped_x + TILE, 1) if cos_a >= 0 else (mapped_x, -1)
-            for i in range(0, WIDTH, TILE):
+            x, dx = (mapped_x + TILE_SIZE, 1) if cos_a >= 0 else (mapped_x, -1)
+            for i in range(0, WIDTH, TILE_SIZE):
                 depth_v = (x - self.player.x) / cos_a
                 y = self.player.y + depth_v * sin_a
                 if to_map_coords(x + dx, y) in self.map.world_map:
                     break
-                x += dx * TILE
+                x += dx * TILE_SIZE
 
             # Horizontal lines
-            y, dy = (mapped_y + TILE, 1) if sin_a >= 0 else (mapped_y, -1)
-            for i in range(0, HEIGHT, TILE):
+            y, dy = (mapped_y + TILE_SIZE, 1) if sin_a >= 0 else (mapped_y, -1)
+            for i in range(0, HEIGHT, TILE_SIZE):
                 depth_h = (y - self.player.y) / sin_a
                 x = self.player.x + depth_h * cos_a
                 if to_map_coords(x, y + dy) in self.map.world_map:
                     break
-                y += dy * TILE
+                y += dy * TILE_SIZE
 
             # Determine the closest wall
             depth = depth_v if depth_v < depth_h else depth_h
@@ -154,7 +150,10 @@ def main():
     player = Player()
     map = Map()
     renderer = Renderer(screen, player, map)
-    exit_game = lambda: (pygame.quit(), exit())
+
+    def exit_game():
+        pygame.quit()
+        exit()
 
     while True:
         keys = pygame.key.get_pressed()
