@@ -9,6 +9,10 @@ HALF_HEIGHT = HEIGHT // 2
 FPS = 100  # Frames per second
 TILE = 100  # Size of the map tile
 
+# Calculation constants
+ROUNDING_ERROR = 0.00001
+ANGLE_STEP = 0.02
+
 # Mini-map scale
 MAP_SCALE = 100
 MAP_TILE = TILE // MAP_SCALE
@@ -23,13 +27,15 @@ DIST = NUM_RAYS / (2 * math.tan(HALF_FOV))  # Distance from the player to the pr
 PROJ_COEFF = 3 * DIST * TILE  # Projection coefficient
 SCALE = WIDTH // NUM_RAYS  # Scale of the projected walls
 
-# Player settings
-player_pos = (HALF_WIDTH + 0.00001, HALF_HEIGHT + 0.00001)
-player_angle = 0
-player_speed = 1
-
 # Color definitions
 BLACK = (0, 0, 0)
+BLUE =  (0, 0, 255)
+GRAY =  (200,200,150)
+
+# Global object reference variables
+player = None
+renderer = None
+clock = None
 
 # Text map representation of the world
 text_map = [
@@ -54,51 +60,89 @@ for j, row in enumerate(text_map):
 # Player class to handle player attributes and movement
 class Player:
     def __init__(self):
-        self.x, self.y = player_pos
-        self.angle = player_angle
+        self.x = HALF_WIDTH + ROUNDING_ERROR
+        self.y = HALF_HEIGHT + ROUNDING_ERROR
+        self.angle = 0
+        self.speed = 1
 
     @property
     def pos(self):
         return (self.x, self.y)
 
-    def movement(self):
+    def move(self):
         sin_a = math.sin(self.angle)
         cos_a = math.cos(self.angle)
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
-            self.x += player_speed * cos_a
-            self.y += player_speed * sin_a
+            self.x += self.speed  * cos_a
+            self.y += self.speed  * sin_a
         if keys[pygame.K_s]:
-            self.x += -player_speed * cos_a
-            self.y += -player_speed * sin_a
+            self.x += -self.speed  * cos_a
+            self.y += -self.speed  * sin_a
         if keys[pygame.K_a]:
-            self.x += player_speed * sin_a
-            self.y += -player_speed * cos_a
+            self.x += self.speed  * sin_a
+            self.y += -self.speed  * cos_a
         if keys[pygame.K_d]:
-            self.x += -player_speed * sin_a
-            self.y += player_speed * cos_a
+            self.x += -self.speed  * sin_a
+            self.y += self.speed  * cos_a
         if keys[pygame.K_LEFT]:
-            self.angle -= 0.02
+            self.angle -= ANGLE_STEP
         if keys[pygame.K_RIGHT]:
-            self.angle += 0.02
+            self.angle += ANGLE_STEP
 
-# Drawing class to handle the rendering of the game world
-class Drawing:
-    def __init__(self, sc):
-        self.sc = sc
+class Renderer:
+    def __init__(self, screen, player):
+        self.screen = screen
+        self.player = player
 
-    # Draw the background (ceiling and floor)
-    def background(self):
-        pygame.draw.rect(self.sc, BLACK, (0, 0, WIDTH, HALF_HEIGHT))
-        pygame.draw.rect(self.sc, BLACK, (0, HALF_HEIGHT, WIDTH, HALF_HEIGHT))
+    def draw_background(self):
+        #Draw Ceiling
+        pygame.draw.rect(self.screen, BLUE, (0, 0, WIDTH, HALF_HEIGHT))
 
-    # Draw the 3D world based on the player's position and angle
-    def world(self, player_pos, player_angle):
-        ray_casting(self.sc, player_pos, player_angle)
+        #Draw Floor
+        pygame.draw.rect(self.screen, GRAY, (0, HALF_HEIGHT, WIDTH, HALF_HEIGHT))
+
+    # Draw walls using raycasting
+    def draw_walls(self):
+        mapped_x, mapped_y = to_map_coords(self.player.x, self.player.y)
+        cur_angle = self.player.angle - HALF_FOV
+        for ray in range(NUM_RAYS):
+            sin_a = math.sin(cur_angle)
+            cos_a = math.cos(cur_angle)
+            sin_a = sin_a if sin_a else ROUNDING_ERROR  # Avoid division by zero
+            cos_a = cos_a if cos_a else ROUNDING_ERROR  # Avoid division by zero
+
+            # Vertical lines
+            x, dx = (mapped_x + TILE, 1) if cos_a >= 0 else (mapped_x, -1)
+            for i in range(0, WIDTH, TILE):
+                depth_v = (x - self.player.x) / cos_a
+                y = self.player.y + depth_v * sin_a
+                if to_map_coords(x + dx, y) in world_map:
+                    break
+                x += dx * TILE
+
+            # Horizontal lines
+            y, dy = (mapped_y + TILE, 1) if sin_a >= 0 else (mapped_y, -1)
+            for i in range(0, HEIGHT, TILE):
+                depth_h = (y - self.player.y) / sin_a
+                x = self.player.x + depth_h * cos_a
+                if to_map_coords(x, y + dy) in world_map:
+                    break
+                y += dy * TILE
+
+            # Determine the closest wall
+            depth = depth_v if depth_v < depth_h else depth_h
+            depth *= math.cos(self.player.angle - cur_angle)  # Remove fish-eye effect
+            proj_height = PROJ_COEFF / depth  # Calculate projected wall height
+            color = get_wall_color()  # Get dynamic wall color
+            while color == (0, 0, 0):
+                color = get_wall_color()
+            pygame.draw.rect(self.screen, color, (ray * SCALE, HALF_HEIGHT - proj_height // 2, SCALE, proj_height))
+            cur_angle += DELTA_ANGLE
 
 # Convert world coordinates to map coordinates
-def mapping(a, b):
-    return (a // TILE) * TILE, (b // TILE) * TILE
+def to_map_coords(x, y):
+    return (x // TILE) * TILE, (y // TILE) * TILE
 
 # Calculate dynamic wall colors
 def get_wall_color():
@@ -108,69 +152,36 @@ def get_wall_color():
     b = (127 * (1 + math.sin(ticks * 0.0015 + 4)) + 128) % 256
     return (int(r), int(g), int(b))
 
-# Perform raycasting to render the walls
-def ray_casting(sc, player_pos, player_angle):
-    ox, oy = player_pos
-    xm, ym = mapping(ox, oy)
-    cur_angle = player_angle - HALF_FOV
-    for ray in range(NUM_RAYS):
-        sin_a = math.sin(cur_angle)
-        cos_a = math.cos(cur_angle)
-        sin_a = sin_a if sin_a else 0.000001  # Avoid division by zero
-        cos_a = cos_a if cos_a else 0.000001  # Avoid division by zero
+def init():
+    global screen, player, renderer, clock;
+      
+    # Initialize Pygame
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    player = Player()
+    renderer = Renderer(screen, player)
+    clock = pygame.time.Clock()
 
-        # Vertical lines
-        x, dx = (xm + TILE, 1) if cos_a >= 0 else (xm, -1)
-        for i in range(0, WIDTH, TILE):
-            depth_v = (x - ox) / cos_a
-            y = oy + depth_v * sin_a
-            if mapping(x + dx, y) in world_map:
-                break
-            x += dx * TILE
+def main():
+    init()
+    while True:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_ESCAPE]:
+                pygame.quit()
+                exit()
 
-        # Horizontal lines
-        y, dy = (ym + TILE, 1) if sin_a >= 0 else (ym, -1)
-        for i in range(0, HEIGHT, TILE):
-            depth_h = (y - oy) / sin_a
-            x = ox + depth_h * cos_a
-            if mapping(x, y + dy) in world_map:
-                break
-            y += dy * TILE
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+        player.move()
+        screen.fill(BLACK)
 
-        # Determine the closest wall
-        depth = depth_v if depth_v < depth_h else depth_h
-        depth *= math.cos(player_angle - cur_angle)  # Remove fish-eye effect
-        proj_height = PROJ_COEFF / depth  # Calculate projected wall height
-        color = get_wall_color()  # Get dynamic wall color
-        while color == (0, 0, 0):
-            color = get_wall_color()
-        pygame.draw.rect(sc, color, (ray * SCALE, HALF_HEIGHT - proj_height // 2, SCALE, proj_height))
-        cur_angle += DELTA_ANGLE
+        renderer.draw_background()
+        renderer.draw_walls()
 
-# Initialize Pygame
-pygame.init()
-sc = pygame.display.set_mode((WIDTH, HEIGHT))
-player = Player()
-drawing = Drawing(sc)
+        pygame.display.flip()
+        clock.tick(FPS)
 
-clock = pygame.time.Clock()
-
-# Main game loop
-while True:
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_ESCAPE]:
-            pygame.quit()
-            exit()
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            exit()
-    player.movement()
-    sc.fill(BLACK)
-
-    drawing.background()
-    drawing.world(player.pos, player.angle)
-
-    pygame.display.flip()
-    clock.tick(FPS)
+if __name__ == "__main__":  
+    main()
