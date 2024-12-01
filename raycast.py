@@ -1,6 +1,8 @@
 import pygame
 import math
 
+# CONSTANTS
+
 # Screen dimensions
 WIDTH = 1250
 HEIGHT = 720
@@ -32,6 +34,15 @@ BLUE = (0, 0, 255)
 GRAY = (200, 200, 150)
 BROWN = (139, 69, 19)
 
+# AUXILIARY FUNCTIONS
+
+
+# Convert world coordinates to map coordinates
+def to_map_coords(x, y):
+    return (x // TILE) * TILE, (y // TILE) * TILE
+
+
+# CLASSES
 
 class Map:
     def __init__(self):
@@ -55,7 +66,6 @@ class Map:
                     self.world_map.add((i * TILE, j * TILE))
 
 
-# Player class to handle player attributes and movement
 class Player:
     def __init__(self):
         self.x = HALF_WIDTH + ROUNDING_ERROR
@@ -138,11 +148,6 @@ class Renderer:
             cur_angle += DELTA_ANGLE
 
 
-# Convert world coordinates to map coordinates
-def to_map_coords(x, y):
-    return (x // TILE) * TILE, (y // TILE) * TILE
-
-
 def main():
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -160,6 +165,7 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
+
         player.move()
         screen.fill(BLACK)
 
