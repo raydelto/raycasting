@@ -2,3 +2,6 @@ bin
 lib
 pyvenv.cfg
 raycast
+pygame_ray
+lib64
+
