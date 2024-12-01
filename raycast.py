@@ -32,29 +32,27 @@ BLUE = (0, 0, 255)
 GRAY = (200, 200, 150)
 BROWN = (139, 69, 19)
 
-# Global object reference variables
-player = None
-renderer = None
 
-# Text map representation of the world
-text_map = [
-    'XXXXXXXXXXXX',
-    'X..........X',
-    'X....X..XX..X',
-    'X..X.......X',
-    'X..X..XX...X',
-    'X.X....X...X',
-    'X.X..X..XX.X',
-    'X....X.....X',
-    'XXXXXXXXXXXXX'
-]
+class Map:
+    def __init__(self):
+        self.text_map = [
+            'XXXXXXXXXXXX',
+            'X..........X',
+            'X....X..XX..X',
+            'X..X.......X',
+            'X..X..XX...X',
+            'X.X....X...X',
+            'X.X..X..XX.X',
+            'X....X.....X',
+            'XXXXXXXXXXXXX'
+        ]
 
-# Create a set of coordinates for walls in the world map
-world_map = set()
-for j, row in enumerate(text_map):
-    for i, char in enumerate(row):
-        if char == 'X':
-            world_map.add((i * TILE, j * TILE))
+        # Create a set of coordinates for walls in the world map
+        self.world_map = set()
+        for j, row in enumerate(self.text_map):
+            for i, char in enumerate(row):
+                if char == 'X':
+                    self.world_map.add((i * TILE, j * TILE))
 
 
 # Player class to handle player attributes and movement
@@ -92,9 +90,10 @@ class Player:
 
 
 class Renderer:
-    def __init__(self, screen, player):
+    def __init__(self, screen, player, map):
         self.screen = screen
         self.player = player
+        self.map = map
 
     def draw_background(self):
         # Draw Ceiling
@@ -118,7 +117,7 @@ class Renderer:
             for i in range(0, WIDTH, TILE):
                 depth_v = (x - self.player.x) / cos_a
                 y = self.player.y + depth_v * sin_a
-                if to_map_coords(x + dx, y) in world_map:
+                if to_map_coords(x + dx, y) in self.map.world_map:
                     break
                 x += dx * TILE
 
@@ -127,7 +126,7 @@ class Renderer:
             for i in range(0, HEIGHT, TILE):
                 depth_h = (y - self.player.y) / sin_a
                 x = self.player.x + depth_h * cos_a
-                if to_map_coords(x, y + dy) in world_map:
+                if to_map_coords(x, y + dy) in self.map.world_map:
                     break
                 y += dy * TILE
 
@@ -144,18 +143,13 @@ def to_map_coords(x, y):
     return (x // TILE) * TILE, (y // TILE) * TILE
 
 
-def init():
-    global screen, player, renderer
-
-    # Initialize Pygame
+def main():
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     player = Player()
-    renderer = Renderer(screen, player)
+    map = Map()
+    renderer = Renderer(screen, player, map)
 
-
-def main():
-    init()
     while True:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE]:
