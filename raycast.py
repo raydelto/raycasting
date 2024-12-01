@@ -29,8 +29,8 @@ SCALE = WIDTH // NUM_RAYS  # Scale of the projected walls
 
 # Color definitions
 BLACK = (0, 0, 0)
-BLUE =  (0, 0, 255)
-GRAY =  (200,200,150)
+BLUE = (0, 0, 255)
+GRAY = (200, 200, 150)
 
 # Global object reference variables
 player = None
@@ -57,6 +57,7 @@ for j, row in enumerate(text_map):
         if char == 'X':
             world_map.add((i * TILE, j * TILE))
 
+
 # Player class to handle player attributes and movement
 class Player:
     def __init__(self):
@@ -74,21 +75,22 @@ class Player:
         cos_a = math.cos(self.angle)
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
-            self.x += self.speed  * cos_a
-            self.y += self.speed  * sin_a
+            self.x += self.speed * cos_a
+            self.y += self.speed * sin_a
         if keys[pygame.K_s]:
-            self.x += -self.speed  * cos_a
-            self.y += -self.speed  * sin_a
+            self.x += -self.speed * cos_a
+            self.y += -self.speed * sin_a
         if keys[pygame.K_a]:
-            self.x += self.speed  * sin_a
-            self.y += -self.speed  * cos_a
+            self.x += self.speed * sin_a
+            self.y += -self.speed * cos_a
         if keys[pygame.K_d]:
-            self.x += -self.speed  * sin_a
-            self.y += self.speed  * cos_a
+            self.x += -self.speed * sin_a
+            self.y += self.speed * cos_a
         if keys[pygame.K_LEFT]:
             self.angle -= ANGLE_STEP
         if keys[pygame.K_RIGHT]:
             self.angle += ANGLE_STEP
+
 
 class Renderer:
     def __init__(self, screen, player):
@@ -96,10 +98,10 @@ class Renderer:
         self.player = player
 
     def draw_background(self):
-        #Draw Ceiling
+        # Draw Ceiling
         pygame.draw.rect(self.screen, BLUE, (0, 0, WIDTH, HALF_HEIGHT))
 
-        #Draw Floor
+        # Draw Floor
         pygame.draw.rect(self.screen, GRAY, (0, HALF_HEIGHT, WIDTH, HALF_HEIGHT))
 
     # Draw walls using raycasting
@@ -140,9 +142,11 @@ class Renderer:
             pygame.draw.rect(self.screen, color, (ray * SCALE, HALF_HEIGHT - proj_height // 2, SCALE, proj_height))
             cur_angle += DELTA_ANGLE
 
+
 # Convert world coordinates to map coordinates
 def to_map_coords(x, y):
     return (x // TILE) * TILE, (y // TILE) * TILE
+
 
 # Calculate dynamic wall colors
 def get_wall_color():
@@ -152,9 +156,10 @@ def get_wall_color():
     b = (127 * (1 + math.sin(ticks * 0.0015 + 4)) + 128) % 256
     return (int(r), int(g), int(b))
 
+
 def init():
-    global screen, player, renderer, clock;
-      
+    global screen, player, renderer, clock
+
     # Initialize Pygame
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -162,13 +167,14 @@ def init():
     renderer = Renderer(screen, player)
     clock = pygame.time.Clock()
 
+
 def main():
     init()
     while True:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE]:
-                pygame.quit()
-                exit()
+            pygame.quit()
+            exit()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -183,5 +189,6 @@ def main():
         pygame.display.flip()
         clock.tick(FPS)
 
-if __name__ == "__main__":  
+
+if __name__ == "__main__":
     main()
