@@ -154,17 +154,16 @@ def main():
     player = Player()
     map = Map()
     renderer = Renderer(screen, player, map)
+    exit_game = lambda: (pygame.quit(), exit())
 
     while True:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE]:
-            pygame.quit()
-            exit()
+            exit_game()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
+                exit_game()
 
         player.move()
         screen.fill(BLACK)
