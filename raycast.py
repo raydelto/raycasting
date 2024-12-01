@@ -91,8 +91,10 @@ class Player:
             self.y += self.speed * cos_a
         if keys[pygame.K_LEFT]:
             self.angle -= ANGLE_STEP
+            self.angle %= 2 * math.pi  # Keep angle between 0 and 2*pi
         if keys[pygame.K_RIGHT]:
             self.angle += ANGLE_STEP
+            self.angle %= 2 * math.pi  # Keep angle between 0 and 2*pi
 
 
 class Renderer:
