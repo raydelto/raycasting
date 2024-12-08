@@ -3,8 +3,8 @@ import math
 
 # CONSTANTS
 
-# Screen dimensions
-WIDTH = 800
+# Screen dimensions in pixels
+WIDTH = 800 # This number must be divisible by NUM_RAYS or column gaps will appear
 HEIGHT = 600
 HALF_WIDTH = WIDTH // 2
 HALF_HEIGHT = HEIGHT // 2
@@ -17,10 +17,10 @@ ANGLE_STEP = 0.02
 # Field of view settings
 FOV = math.pi / 3 # 60 degrees
 HALF_FOV = FOV / 2
-NUM_RAYS = 400  # Number of rays for raycasting
+NUM_RAYS = 400  # Number of rays for raycasting.
 MAX_DEPTH = 800  # Max depth of field
 DELTA_ANGLE = FOV / NUM_RAYS  # Angle between rays
-DIST = NUM_RAYS / (2 * math.tan(HALF_FOV))  # Distance from the player to the projection plane
+DIST = (NUM_RAYS / 2.0) / math.tan(HALF_FOV)  # Distance from the player to the projection plane
 PROJ_COEFF = 3 * DIST * TILE_SIZE  # Projection coefficient
 SCALE = WIDTH // NUM_RAYS  # Scale of the projected walls
 
