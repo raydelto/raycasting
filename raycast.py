@@ -4,10 +4,10 @@ import math
 # CONSTANTS
 
 # Screen dimensions in pixels
-WIDTH = 800 # This number must be divisible by NUM_RAYS or column gaps will appear
-HEIGHT = 600
-HALF_WIDTH = WIDTH // 2
-HALF_HEIGHT = HEIGHT // 2
+SCREEN_WIDTH = 800 # This number must be divisible by NUM_RAYS or column gaps will appear
+SCREEN_HEIGHT = 600
+HALF_WIDTH = SCREEN_WIDTH // 2
+HALF_HEIGHT = SCREEN_HEIGHT // 2
 TILE_SIZE = 100  # In pixels
 
 # Calculation constants
@@ -20,9 +20,9 @@ HALF_FOV = FOV / 2
 NUM_RAYS = 400  # Number of rays for raycasting.
 MAX_DEPTH = 800  # Max depth of field
 DELTA_ANGLE = FOV / NUM_RAYS  # Angle between rays
-DIST = (NUM_RAYS / 2.0) / math.tan(HALF_FOV)  # Distance from the player to the projection plane
-PROJ_COEFF = 3 * DIST * TILE_SIZE  # Projection coefficient
-SCALE = WIDTH // NUM_RAYS  # Scale of the projected walls
+PLAYER_DIST = (NUM_RAYS / 2.0) / math.tan(HALF_FOV)  # Distance from the player to the projection plane
+PROJ_COEFF = 3 * PLAYER_DIST * TILE_SIZE  # Projection coefficient for wall height calculation.
+SCALE = SCREEN_WIDTH // NUM_RAYS  # Scale of the projected walls
 
 # Color definitions
 BLACK = (0, 0, 0)
@@ -45,12 +45,12 @@ class Map:
         self.text_map = [
             'XXXXXXXXXXXX',
             'X..........X',
-            'X....X..XX..X',
-            'X..X.......X',
-            'X..X..XX...X',
-            'X.X....X...X',
-            'X.X..X..XX.X',
-            'X....X.....X',
+            'X..........X',
+            'X..........X',
+            'X..........X',
+            'X..........X',
+            'X..........X',
+            'X..........X',
             'XXXXXXXXXXXXX'
         ]
 
@@ -105,10 +105,10 @@ class Renderer:
 
     def draw_background(self):
         # Draw Ceiling
-        pygame.draw.rect(self.screen, BLUE, (0, 0, WIDTH, HALF_HEIGHT))
+        pygame.draw.rect(self.screen, BLUE, (0, 0, SCREEN_WIDTH, HALF_HEIGHT))
 
         # Draw Floor
-        pygame.draw.rect(self.screen, GRAY, (0, HALF_HEIGHT, WIDTH, HALF_HEIGHT))
+        pygame.draw.rect(self.screen, GRAY, (0, HALF_HEIGHT, SCREEN_WIDTH, HALF_HEIGHT))
 
     # Draw walls using raycasting
     def draw_walls(self):
@@ -122,7 +122,7 @@ class Renderer:
 
             # Vertical lines
             x, dx = (mapped_x + TILE_SIZE, 1) if cos_a >= 0 else (mapped_x, -1)
-            for i in range(0, WIDTH, TILE_SIZE):
+            for i in range(0, SCREEN_WIDTH, TILE_SIZE):
                 depth_v = (x - self.player.x) / cos_a
                 y = self.player.y + depth_v * sin_a
                 if to_map_coords(x + dx, y) in self.map.world_map:
@@ -131,7 +131,7 @@ class Renderer:
 
             # Horizontal lines
             y, dy = (mapped_y + TILE_SIZE, 1) if sin_a >= 0 else (mapped_y, -1)
-            for i in range(0, HEIGHT, TILE_SIZE):
+            for i in range(0, SCREEN_HEIGHT, TILE_SIZE):
                 depth_h = (y - self.player.y) / sin_a
                 x = self.player.x + depth_h * cos_a
                 if to_map_coords(x, y + dy) in self.map.world_map:
@@ -148,7 +148,7 @@ class Renderer:
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     player = Player()
     map = Map()
     renderer = Renderer(screen, player, map)
